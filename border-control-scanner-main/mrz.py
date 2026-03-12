@@ -115,18 +115,22 @@ def scan_mrz_from_bytes(image_bytes: bytes) -> dict:
         )
 
         rec_texts = []
+        rec_scores = []
         for res in results:
             data = res.json
             if isinstance(data, str):
                 data = json.loads(data)
             main = data.get("res", {})
             rec_texts.extend(main.get("rec_texts", []))
+            rec_scores.extend(main.get("rec_scores", []))
 
         print(f"OCR topilgan matnlar: {rec_texts}", flush=True)
         line1, line2 = _find_mrz_lines(rec_texts)
         print(f"MRZ line1: {line1}", flush=True)
         print(f"MRZ line2: {line2}", flush=True)
-        return {"line1": line1, "line2": line2}
+
+        avg_score = round(sum(rec_scores) / len(rec_scores) * 100, 1) if rec_scores else 0.0
+        return {"line1": line1, "line2": line2, "ocr_accuracy": avg_score}
 
     finally:
         if tmp_path and os.path.exists(tmp_path):

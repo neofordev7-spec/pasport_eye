@@ -389,11 +389,12 @@ async def scan_passport(request: Request, file: UploadFile = File(...)):
         # 2. Parse (Strict Logic)
         parsed_data = StrictMRZParser.parse_mrz_strict(mrz_result["line1"], mrz_result["line2"])
 
-        # 3. Add Metadata (BRANDING REMOVED)
+        # 3. Add Metadata
+        parsed_data["ocr_accuracy"] = mrz_result.get("ocr_accuracy", 0.0)
         parsed_data["scan_metadata"] = {
             "timestamp": datetime.utcnow().isoformat() + "Z",
             "file_name": file.filename,
-            "scanner": "Customs AI Scanner (v3.5)" # <--- NEW NAME
+            "scanner": "Customs AI Scanner (v3.5)"
         }
 
         print(f"✅ Scan completed: {parsed_data['passport_number']}", flush=True)

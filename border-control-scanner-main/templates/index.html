@@ -533,10 +533,9 @@
             </button>
         </div>
 
-        <!-- <div class="footer">
-            <p>Loyiha Muallifi:</p>
-            <p><a href="#">-</a></p>
-        </div> -->
+        <div class="footer">
+            <p>Targeting and risk monitoring department</p>
+        </div>
     </div>
 
     <script>
@@ -845,6 +844,10 @@
                 <div class="data-item">
                     <div class="data-label">Millat</div>
                     <div class="data-value">${data.nationality}</div>
+                </div>
+                <div class="data-item">
+                    <div class="data-label">OCR Aniqligi</div>
+                    <div class="data-value highlight">${data.ocr_accuracy != null ? data.ocr_accuracy + '%' : 'N/A'}</div>
                 </div>
             `;
 
