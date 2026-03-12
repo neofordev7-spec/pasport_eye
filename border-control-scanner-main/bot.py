@@ -21,7 +21,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Bot configuration
-BOT_TOKEN = "8319403923:AAH8LkaqsickGL980lJKEOk51tVyhI6onZA"
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "8319403923:AAH8LkaqsickGL980lJKEOk51tVyhI6onZA")
 WEBAPP_URL = os.environ.get("RAILWAY_STATIC_URL", "http://localhost:8000")
 
 # Ensure HTTPS for production Railway deployments
@@ -39,15 +39,17 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
 
     welcome_message = (
-        f"🛂 <b>Bojxona Passport Scanner</b>\n\n"
-        f"Salom, {user.first_name}! 👋\n\n"
-        f"Bu bot O'zbekiston Respublikasi Bojxona qo'mitasi uchun "
-        f"biometrik pasportlarni skanerlash tizimi.\n\n"
-        f"<b>Imkoniyatlar:</b>\n"
-        f"✅ ICAO 9303 TD3 standartiga mos MRZ skanerlash\n"
-        f"✅ Pasport raqami, JSHSHIR/PNFL ekstraktsiyasi\n"
-        f"✅ Avtomatik tekshiruv va validatsiya\n\n"
-        f"<i>Mini App ni ishga tushirish uchun pastdagi tugmani bosing.</i>"
+        f"🛂 <b>Bojxona MRZ Scanner</b>\n\n"
+        f"Assalomu alaykum, {user.first_name}! 👋\n\n"
+        f"O'zbekiston Davlat Bojxona Qo'mitasi chegarа nazorati uchun "
+        f"<b>biometrik pasport MRZ skaneri</b>.\n\n"
+        f"━━━━━━━━━━━━━━━━\n"
+        f"🌍 <b>Barcha davlatlar pasportlari</b> qo'llab-quvvatlanadi\n"
+        f"📋 <b>ICAO Doc 9303</b> TD3 standarti asosida ishlaydi\n"
+        f"🔒 <b>Oflayn OCR</b> — ma'lumotlar tashqariga chiqmaydi\n"
+        f"✅ <b>Matematik haqiqiylik tekshiruvi</b> (Modulo 10)\n"
+        f"━━━━━━━━━━━━━━━━\n\n"
+        f"📌 <i>Pasportni skanerlash uchun quyidagi tugmani bosing:</i>"
     )
 
     # Create Web App button
@@ -55,7 +57,9 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton(
             "📷 Pasportni Skanerlash",
             web_app=WebAppInfo(url=WEBAPP_URL)
-        )]
+        )],
+        [InlineKeyboardButton("❓ Yordam", callback_data="help"),
+         InlineKeyboardButton("ℹ️ Tizim", callback_data="info")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -69,18 +73,20 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle /help command"""
     help_text = (
-        "📖 <b>Yordam</b>\n\n"
-        "<b>Qo'llanma:</b>\n"
-        "1. /start - Mini App ni ishga tushirish\n"
-        "2. Mini App ni oching\n"
-        "3. Kamerani yoqing\n"
-        "4. Pasportni yarim rang (neon) ramkaga joylang\n"
-        "5. Rasmga oling\n"
-        "6. Natijani ko'ring\n\n"
-        "<b>Texnik qo'llab-quvvatlash:</b>\n"
-        "Muammolar yuzaga kelsa, administrator bilan bog'laning.\n\n"
-        "<b>Versiya:</b> 1.0.0\n"
-        "<b>Standard:</b> ICAO 9303 TD3"
+        "📖 <b>Foydalanish qo'llanmasi</b>\n\n"
+        "1️⃣ /start — Mini App ni ochish\n"
+        "2️⃣ 📷 tugmasini bosing\n"
+        "3️⃣ Kamerani yoqing va ruxsat bering\n"
+        "4️⃣ Pasportning <b>pastki qismi</b> (MRZ zona) ni yashil ramkaga joylang\n"
+        "5️⃣ Yorug'lik yetarli bo'lsin — soya va aks yo'q\n"
+        "6️⃣ 📸 tugmasini bosib rasmga oling\n"
+        "7️⃣ Natijani ko'ring va tekshiring\n\n"
+        "━━━━━━━━━━━━━━━━\n"
+        "⚠️ <b>Eslatmalar:</b>\n"
+        "• MRZ zona — pasportning <i>eng pastki 2 qatori</i>\n"
+        "• Rasm loyqa bo'lsa qayta oling\n"
+        "• Yorug'lik yetarli bo'lishi shart\n\n"
+        "🆘 Muammo bo'lsa administrator bilan bog'laning"
     )
 
     await update.message.reply_text(help_text, parse_mode='HTML')
@@ -89,27 +95,30 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def info_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle /info command - System information"""
     info_text = (
-        "ℹ️ <b>Tizim Ma'lumotlari</b>\n\n"
-        "<b>Nomi:</b> Bojxona Passport Scanner\n"
-        "<b>Versiya:</b> 1.0.0\n"
-        "<b>Standard:</b> ICAO 9303 TD3\n"
-        "<b>OCR Engine:</b> Tesseract + PassportEye\n"
-        "<b>Backend:</b> FastAPI + Python\n"
-        "<b>Frontend:</b> Telegram Mini App\n\n"
-        "<b>Qo'llab-quvvatlanadigan hujjatlar:</b>\n"
-        "• O'zbekiston Respublikasi Biometrik Pasporti\n\n"
-        "<b>Ekstraktsiya qilinadigan ma'lumotlar:</b>\n"
-        "• Pasport raqami\n"
-        "• Familiya va Ism\n"
-        "• Tug'ilgan sana\n"
-        "• Jins (M/F)\n"
-        "• Amal qilish muddati\n"
-        "• JSHSHIR/PNFL (Shaxsiy raqam)\n"
-        "• Millat\n\n"
-        "<b>Validatsiya:</b>\n"
-        "✓ ICAO 9303 Checksum (Modulo 10)\n"
-        "✓ Sana formatlari\n"
-        "✓ Composite checkdigit"
+        "ℹ️ <b>Tizim ma'lumotlari</b>\n\n"
+        "🏷 <b>Nomi:</b> Bojxona MRZ Scanner\n"
+        "🔢 <b>Versiya:</b> 3.5.0\n"
+        "📜 <b>Standart:</b> ICAO Doc 9303 TD3\n"
+        "🤖 <b>OCR:</b> PaddleOCR (oflayn)\n"
+        "⚙️ <b>Backend:</b> FastAPI + Python 3.10\n\n"
+        "━━━━━━━━━━━━━━━━\n"
+        "🌍 <b>Qo'llab-quvvatlanadigan pasportlar:</b>\n"
+        "Barcha davlatlar ICAO TD3 biometrik pasportlari\n\n"
+        "📋 <b>O'qiladigan ma'lumotlar:</b>\n"
+        "🔹 Pasport raqami\n"
+        "🔹 Familiya va Ism\n"
+        "🔹 Tug'ilgan sana\n"
+        "🔹 Jins (M / F)\n"
+        "🔹 Amal qilish muddati\n"
+        "🔹 Millat (davlat kodi)\n"
+        "🔹 JSHSHIR/PNFL — faqat UZB pasportlari\n\n"
+        "━━━━━━━━━━━━━━━━\n"
+        "🔐 <b>Haqiqiylik tekshiruvi:</b>\n"
+        "✔️ Composite checksum (ICAO §4.2.2)\n"
+        "✔️ 4 ta alohida Modulo-10 checksum\n"
+        "✔️ Muddati tekshiruvi\n"
+        "✔️ JSHSHIR ↔ MRZ cross-validation (UZB)\n"
+        "📊 Natija: <b>HAQIQIY / SHUBHALI / SOXTA</b>"
     )
 
     await update.message.reply_text(info_text, parse_mode='HTML')
