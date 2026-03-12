@@ -74,8 +74,14 @@ def _find_mrz_lines(rec_texts: list) -> tuple:
         clean = text.strip().replace(" ", "")
         if len(clean) >= 80 and "P<" in clean.upper()[:5]:
             return _smart_split(clean)
-        if len(clean) == 44 and clean.count("<") >= 2:
-            candidates.append(clean)
+        MRZ_CHARS = set('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<')
+        is_mrz_line = (
+            len(clean) == 44
+            and all(c in MRZ_CHARS for c in clean.upper())
+            and clean.replace('<', '') != ''
+        )
+        if is_mrz_line:
+            candidates.append(clean.upper())
         elif clean.upper().startswith("P<") and len(clean) >= 30:
             candidates.append(clean.ljust(44, "<")[:44])
 
