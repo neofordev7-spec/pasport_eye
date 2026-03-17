@@ -22,16 +22,21 @@ logger = logging.getLogger(__name__)
 
 # Bot configuration
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "8319403923:AAH8LkaqsickGL980lJKEOk51tVyhI6onZA")
-WEBAPP_URL = os.environ.get("RAILWAY_STATIC_URL", "http://localhost:8000")
 
-# Ensure HTTPS for production Railway deployments
-if "railway.app" in WEBAPP_URL:
-    # Add https:// if no protocol is present
-    if not WEBAPP_URL.startswith(("http://", "https://")):
-        WEBAPP_URL = f"https://{WEBAPP_URL}"
-    # Replace http:// with https:// if present
-    elif WEBAPP_URL.startswith("http://"):
-        WEBAPP_URL = WEBAPP_URL.replace("http://", "https://")
+# Railway URL ni aniqlash (RAILWAY_STATIC_URL yoki RAILWAY_PUBLIC_DOMAIN)
+WEBAPP_URL = (
+    os.environ.get("RAILWAY_STATIC_URL")
+    or os.environ.get("RAILWAY_PUBLIC_DOMAIN")
+    or "http://localhost:8000"
+)
+
+# HTTPS ni ta'minlash
+if not WEBAPP_URL.startswith(("http://", "https://")):
+    WEBAPP_URL = f"https://{WEBAPP_URL}"
+elif "railway.app" in WEBAPP_URL and WEBAPP_URL.startswith("http://"):
+    WEBAPP_URL = WEBAPP_URL.replace("http://", "https://")
+
+logger.info(f"WEBAPP_URL: {WEBAPP_URL}")
 
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
