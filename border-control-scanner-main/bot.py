@@ -23,18 +23,27 @@ logger = logging.getLogger(__name__)
 # Bot configuration
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "8319403923:AAH8LkaqsickGL980lJKEOk51tVyhI6onZA")
 
-# Railway URL ni aniqlash (RAILWAY_STATIC_URL yoki RAILWAY_PUBLIC_DOMAIN)
+# Railway URL ni aniqlash
+# Debug: barcha Railway env varlarni ko'rsatish
+for key, val in os.environ.items():
+    if "RAILWAY" in key or key == "PORT":
+        logger.info(f"  ENV: {key} = {val}")
+
 WEBAPP_URL = (
     os.environ.get("RAILWAY_STATIC_URL")
     or os.environ.get("RAILWAY_PUBLIC_DOMAIN")
-    or "http://localhost:8000"
+    or os.environ.get("RAILWAY_DOMAIN")
+    or ""
 )
 
-# HTTPS ni ta'minlash
-if not WEBAPP_URL.startswith(("http://", "https://")):
-    WEBAPP_URL = f"https://{WEBAPP_URL}"
-elif "railway.app" in WEBAPP_URL and WEBAPP_URL.startswith("http://"):
-    WEBAPP_URL = WEBAPP_URL.replace("http://", "https://")
+# Agar Railway URL topilmasa, localhost ishlatiladi (polling mode)
+if not WEBAPP_URL:
+    logger.warning("⚠️ Railway public URL topilmadi! Polling mode ishlatiladi.")
+    WEBAPP_URL = "http://localhost:8000"
+else:
+    # HTTPS ni ta'minlash
+    if not WEBAPP_URL.startswith(("http://", "https://")):
+        WEBAPP_URL = f"https://{WEBAPP_URL}"
 
 logger.info(f"WEBAPP_URL: {WEBAPP_URL}")
 
@@ -204,8 +213,9 @@ async def main():
     await application.initialize()
     await application.start()
 
-    # Check if we're running on Railway (use webhooks) or locally (use polling)
-    is_railway = "railway.app" in WEBAPP_URL or os.environ.get("RAILWAY_ENVIRONMENT")
+    # Webhook faqat haqiqiy public URL mavjud bo'lganda ishlatiladi
+    has_public_url = WEBAPP_URL and "localhost" not in WEBAPP_URL
+    is_railway = has_public_url and os.environ.get("RAILWAY_ENVIRONMENT")
 
     if is_railway:
         # Use webhooks for Railway deployment (prevents conflicts)
