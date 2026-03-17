@@ -11,7 +11,7 @@ from datetime import datetime
 from typing import Dict, Optional
 from fastapi import FastAPI, File, UploadFile, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.responses import JSONResponse, HTMLResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 from PIL import Image
 from telegram import Update
@@ -353,6 +353,14 @@ def validate_image_file(file: UploadFile, contents: bytes) -> None:
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
+
+@app.get("/sample-passport")
+async def sample_passport():
+    """Instruction sahifasi uchun namuna pasport rasmi."""
+    img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sample_passport.jpg")
+    if not os.path.exists(img_path):
+        raise HTTPException(status_code=404, detail="Sample passport image not found")
+    return FileResponse(img_path, media_type="image/jpeg")
 
 @app.get("/health")
 async def health_check():

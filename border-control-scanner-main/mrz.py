@@ -1,16 +1,24 @@
 """
-PaddleOCR yordamida passport MRZ zonasini o'qish moduli.
+YOLO + PaddleOCR yordamida passport MRZ zonasini aniqlash va o'qish moduli.
+1. YOLO (best.pt) — MRZ zonani detect qiladi va crop qiladi
+2. PaddleOCR — cropped MRZ zonani o'qiydi
 scan_mrz_from_bytes(image_bytes) -> {"line1": "...", "line2": "..."} qaytaradi.
 """
 
+import io
 import json
 import os
 import re
 import tempfile
 
+from PIL import Image
 from paddleocr import PaddleOCR
 
 _ocr = None
+_yolo_model = None
+
+# YOLO model fayli (loyiha root da)
+YOLO_MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "best.pt")
 
 
 def _get_ocr() -> PaddleOCR:
@@ -20,6 +28,64 @@ def _get_ocr() -> PaddleOCR:
         _ocr = PaddleOCR(lang="en")
         print("PaddleOCR tayyor.", flush=True)
     return _ocr
+
+
+def _get_yolo():
+    """YOLO modelni bir marta yuklash (singleton)."""
+    global _yolo_model
+    if _yolo_model is None:
+        print(f"YOLO model yuklanmoqda: {YOLO_MODEL_PATH}", flush=True)
+        from ultralytics import YOLO
+        _yolo_model = YOLO(YOLO_MODEL_PATH)
+        print("YOLO model tayyor.", flush=True)
+    return _yolo_model
+
+
+def _detect_mrz_zone(image_bytes: bytes) -> bytes | None:
+    """
+    YOLO orqali MRZ zonani detect qiladi va crop qilingan rasmni qaytaradi.
+    Agar topilmasa None qaytaradi.
+    """
+    try:
+        model = _get_yolo()
+        img = Image.open(io.BytesIO(image_bytes))
+        if img.mode != "RGB":
+            img = img.convert("RGB")
+
+        results = model.predict(source=img, conf=0.25, verbose=False)
+
+        if not results or len(results[0].boxes) == 0:
+            print("YOLO: MRZ zona topilmadi", flush=True)
+            return None
+
+        # Eng yuqori confidence ga ega bbox ni olish
+        boxes = results[0].boxes
+        best_idx = boxes.conf.argmax().item()
+        best_conf = boxes.conf[best_idx].item()
+        x1, y1, x2, y2 = boxes.xyxy[best_idx].tolist()
+
+        print(f"YOLO: MRZ zona topildi (conf={best_conf:.2f}, bbox=[{x1:.0f},{y1:.0f},{x2:.0f},{y2:.0f}])", flush=True)
+
+        # Bbox ni biroz kengaytirish (padding 5%)
+        w, h = img.size
+        pad_x = (x2 - x1) * 0.05
+        pad_y = (y2 - y1) * 0.05
+        x1 = max(0, x1 - pad_x)
+        y1 = max(0, y1 - pad_y)
+        x2 = min(w, x2 + pad_x)
+        y2 = min(h, y2 + pad_y)
+
+        # Crop
+        cropped = img.crop((int(x1), int(y1), int(x2), int(y2)))
+
+        # Bytes ga o'girish
+        buf = io.BytesIO()
+        cropped.save(buf, format="JPEG", quality=95)
+        return buf.getvalue()
+
+    except Exception as e:
+        print(f"YOLO xato: {e}", flush=True)
+        return None
 
 
 def _normalize_line(line: str) -> str:
@@ -94,13 +160,9 @@ def _find_mrz_lines(rec_texts: list) -> tuple:
     )
 
 
-def scan_mrz_from_bytes(image_bytes: bytes) -> dict:
-    """
-    Rasm baytlaridan MRZ o'qiydi.
-    Qaytaradi: {"line1": "P<UZB...", "line2": "FA1234567..."}
-    """
+def _run_ocr(image_bytes: bytes) -> dict:
+    """PaddleOCR orqali rasmdan matn o'qish."""
     ocr = _get_ocr()
-
     tmp_path = None
     try:
         with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp:
@@ -124,14 +186,38 @@ def scan_mrz_from_bytes(image_bytes: bytes) -> dict:
             rec_texts.extend(main.get("rec_texts", []))
             rec_scores.extend(main.get("rec_scores", []))
 
-        print(f"OCR topilgan matnlar: {rec_texts}", flush=True)
-        line1, line2 = _find_mrz_lines(rec_texts)
-        print(f"MRZ line1: {line1}", flush=True)
-        print(f"MRZ line2: {line2}", flush=True)
-
-        avg_score = round(sum(rec_scores) / len(rec_scores) * 100, 1) if rec_scores else 0.0
-        return {"line1": line1, "line2": line2, "ocr_accuracy": avg_score}
-
+        return {"rec_texts": rec_texts, "rec_scores": rec_scores}
     finally:
         if tmp_path and os.path.exists(tmp_path):
             os.unlink(tmp_path)
+
+
+def scan_mrz_from_bytes(image_bytes: bytes) -> dict:
+    """
+    Rasm baytlaridan MRZ o'qiydi.
+    1. YOLO bilan MRZ zonani detect qiladi
+    2. Cropped zonani PaddleOCR ga beradi
+    3. Fallback: YOLO topilmasa to'liq rasmni PaddleOCR ga beradi
+    Qaytaradi: {"line1": "P<UZB...", "line2": "FA1234567...", "ocr_accuracy": 95.2}
+    """
+    # 1-bosqich: YOLO bilan MRZ zonani aniqlash
+    mrz_cropped = _detect_mrz_zone(image_bytes)
+
+    # 2-bosqich: OCR (cropped yoki to'liq rasm)
+    if mrz_cropped:
+        print("OCR: YOLO tomonidan cropped MRZ zona ishlatilmoqda", flush=True)
+        ocr_result = _run_ocr(mrz_cropped)
+    else:
+        print("OCR: Fallback — to'liq rasm ishlatilmoqda", flush=True)
+        ocr_result = _run_ocr(image_bytes)
+
+    rec_texts = ocr_result["rec_texts"]
+    rec_scores = ocr_result["rec_scores"]
+
+    print(f"OCR topilgan matnlar: {rec_texts}", flush=True)
+    line1, line2 = _find_mrz_lines(rec_texts)
+    print(f"MRZ line1: {line1}", flush=True)
+    print(f"MRZ line2: {line2}", flush=True)
+
+    avg_score = round(sum(rec_scores) / len(rec_scores) * 100, 1) if rec_scores else 0.0
+    return {"line1": line1, "line2": line2, "ocr_accuracy": avg_score}

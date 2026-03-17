@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Chegara Nazorati - Passport Scanner</title>
+    <title>Bojxona Nazorati - Passport Scanner</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * {
@@ -14,89 +14,210 @@
         }
 
         :root {
-            /* Chegara qo'shinlari uchun yashil rang */
-            --neon-green: #008c13;
-            --dark-bg: #f4f6f8;
-            --dark-card: #ffffff;
-            --dark-border: #d1d5db;
-            --text-primary: #1a1a2e;
+            --navy: #1a1a4e;
+            --navy-light: #2d2d6b;
+            --white: #ffffff;
+            --bg-gray: #f5f5f5;
+            --field-bg: #f0f0f0;
+            --border-gray: #d1d5db;
+            --text-dark: #1a1a2e;
             --text-secondary: #6b7280;
-            --error-red: #dc2626;
+            --text-label: #999999;
+            --accent-green: #008c13;
             --success-green: #16a34a;
+            --error-red: #dc2626;
+            --warning-orange: #f59e0b;
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: var(--dark-bg);
-            color: var(--text-primary);
+            background: var(--bg-gray);
+            color: var(--text-dark);
             overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
         }
 
-        .container {
-            max-width: 100vw;
-            min-height: 100vh;
+        /* ========== NAVY HEADER BAR ========== */
+        .nav-header {
+            background: var(--navy);
+            color: var(--white);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-back {
+            background: none;
+            border: none;
+            color: var(--white);
+            font-size: 22px;
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-back:hover {
+            opacity: 0.8;
+        }
+
+        .nav-title {
+            font-size: 18px;
+            font-weight: 600;
+            flex: 1;
+            text-align: center;
+            margin-right: 30px;
+        }
+
+        /* ========== STEP CONTAINERS ========== */
+        .step {
+            display: none;
+            min-height: calc(100vh - 56px);
+            flex-direction: column;
+        }
+
+        .step.active {
+            display: flex;
+        }
+
+        /* ========== STEP 1: INSTRUCTION ========== */
+        .instruction-content {
+            padding: 24px 20px;
+            flex: 1;
+        }
+
+        .instruction-card {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+        }
+
+        .instruction-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .instruction-icon {
+            width: 44px;
+            height: 44px;
+            background: var(--bg-gray);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+
+        .instruction-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-dark);
+            line-height: 1.3;
+        }
+
+        .instruction-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .passport-sample {
+            width: 100%;
+            border-radius: 12px;
+            border: 1px solid var(--border-gray);
+            margin-bottom: 16px;
+        }
+
+        .passport-sample img {
+            width: 100%;
+            border-radius: 12px;
+            display: block;
+        }
+
+        .note-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-align: center;
+            font-style: italic;
+        }
+
+        .scan-btn-container {
             padding: 20px;
+        }
+
+        .btn-scan {
+            width: 100%;
+            padding: 16px;
+            background: var(--navy);
+            color: var(--white);
+            border: none;
+            border-radius: 28px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: background 0.2s;
+        }
+
+        .btn-scan:hover {
+            background: var(--navy-light);
+        }
+
+        .btn-scan:active {
+            transform: scale(0.98);
+        }
+
+        /* ========== STEP 2: CAMERA (FULLSCREEN) ========== */
+        .camera-fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            z-index: 200;
             display: flex;
             flex-direction: column;
         }
 
-        .header {
-            text-align: center;
-            margin-bottom: 25px;
-            padding: 15px 0;
-            border-bottom: 2px solid var(--neon-green);
+        .camera-top-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            z-index: 210;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
         }
 
-        .header h1 {
-            font-size: 22px;
-            font-weight: 800;
-            color: var(--neon-green);
-            text-shadow: none;
-            margin-bottom: 5px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+        .camera-back-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: var(--white);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 8px 14px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
         }
 
-        .header p {
-            font-size: 11px;
-            color: var(--text-primary);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-weight: 600;
-            opacity: 0.8;
-            margin-bottom: 3px;
-        }
-
-        .header .sub-info {
-            font-size: 10px;
-            color: var(--neon-green);
-            font-weight: 700;
-            border: 1px solid var(--neon-green);
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 4px;
-            margin-top: 5px;
-        }
-
-        .camera-section {
-            background: var(--dark-card);
-            border: 2px solid var(--dark-border);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 20px;
-            position: relative;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-        }
-
-        .camera-container {
-            position: relative;
-            width: 100%;
-            aspect-ratio: 4/3;
-            background: #000;
-            border-radius: 12px;
-            overflow: hidden;
-            margin-bottom: 20px;
+        .camera-back-btn:hover {
+            background: rgba(255,255,255,0.3);
         }
 
         #camera-stream {
@@ -110,102 +231,61 @@
             width: 100%;
             height: 100%;
             object-fit: contain;
+            background: #000;
         }
 
         /* Passport Guide Frame */
         .passport-guide {
             position: absolute;
-            bottom: 15%;
+            bottom: 22%;
             left: 50%;
             transform: translateX(-50%);
-            width: 90%;
-            height: 18%;
-            border: 3px solid var(--neon-green);
+            width: 88%;
+            height: 16%;
+            border: 2.5px solid rgba(255, 255, 255, 0.8);
             border-radius: 8px;
-            box-shadow:
-                0 0 20px rgba(0, 140, 19, 0.4),
-                inset 0 0 20px rgba(0, 140, 19, 0.1);
             pointer-events: none;
-            z-index: 10;
+            z-index: 210;
         }
 
         .passport-guide::before {
-            content: '';
+            content: 'MRZ zonani ramkaga joylashtiring';
             position: absolute;
-            top: -25px;
+            top: -32px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(255,255,255,0.9);
-            color: var(--neon-green);
-            padding: 4px 12px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 700;
+            background: rgba(0, 0, 0, 0.6);
+            color: var(--white);
+            padding: 5px 14px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 600;
             white-space: nowrap;
-            border: 1px solid var(--neon-green);
+            backdrop-filter: blur(10px);
         }
 
         .passport-guide.scanning::before {
-            content: '⚡ SKANERLASH...';
+            content: 'Skanerlash...';
+            background: var(--accent-green);
         }
 
-        .passport-guide:not(.scanning)::before {
-            content: '🛂 MRZ KODNI RAMKAGA JOYLANG';
-        }
-
-        /* Corner markers for guide */
-        .passport-guide::after,
-        .corner-tl,
-        .corner-tr,
-        .corner-bl,
-        .corner-br {
+        /* Corner markers */
+        .corner-tl, .corner-tr, .corner-bl, .corner-br {
             position: absolute;
-            width: 20px;
-            height: 20px;
-            border: 3px solid var(--neon-green);
+            width: 24px;
+            height: 24px;
+            border: 3px solid var(--white);
         }
 
-        .corner-tl {
-            top: -3px;
-            left: -3px;
-            border-right: none;
-            border-bottom: none;
-        }
+        .corner-tl { top: -3px; left: -3px; border-right: none; border-bottom: none; }
+        .corner-tr { top: -3px; right: -3px; border-left: none; border-bottom: none; }
+        .corner-bl { bottom: -3px; left: -3px; border-right: none; border-top: none; }
+        .corner-br { bottom: -3px; right: -3px; border-left: none; border-top: none; }
 
-        .corner-tr {
-            top: -3px;
-            right: -3px;
-            border-left: none;
-            border-bottom: none;
-        }
-
-        .corner-bl {
-            bottom: -3px;
-            left: -3px;
-            border-right: none;
-            border-top: none;
-        }
-
-        .corner-br {
-            bottom: -3px;
-            right: -3px;
-            border-left: none;
-            border-top: none;
-        }
-
-        /* Scanning animation */
+        /* Scan line animation */
         @keyframes scan-line {
-
-            0%,
-            100% {
-                top: 0;
-                opacity: 0;
-            }
-
-            50% {
-                top: 100%;
-                opacity: 1;
-            }
+            0%, 100% { top: 0; opacity: 0; }
+            50% { top: 100%; opacity: 1; }
         }
 
         .scan-line {
@@ -213,193 +293,232 @@
             position: absolute;
             width: 100%;
             height: 2px;
-            background: var(--neon-green);
-            box-shadow: 0 0 10px var(--neon-green);
+            background: var(--accent-green);
+            box-shadow: 0 0 12px var(--accent-green);
             animation: scan-line 2s ease-in-out infinite;
-            z-index: 11;
+            z-index: 211;
         }
 
         .scanning .scan-line {
             display: block;
         }
 
-        .btn {
-            width: 100%;
-            padding: 16px;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
+        /* Camera bottom controls */
+        .camera-bottom {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 30px 20px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
+            z-index: 210;
+        }
+
+        .capture-btn {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: var(--white);
+            border: 4px solid rgba(255,255,255,0.4);
             cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            transition: transform 0.15s;
+            position: relative;
         }
 
-        .btn-primary {
-            background: var(--neon-green);
-            color: #ffffff;
-            box-shadow: 0 4px 20px rgba(0, 140, 19, 0.3);
+        .capture-btn::after {
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            right: 4px;
+            bottom: 4px;
+            border-radius: 50%;
+            background: var(--white);
+            transition: background 0.15s;
         }
 
-        .btn-primary:hover {
-            background: #006b0f;
-            box-shadow: 0 6px 30px rgba(0, 140, 19, 0.45);
-            transform: translateY(-2px);
+        .capture-btn:hover::after {
+            background: #e0e0e0;
         }
 
-        .btn-primary:active {
-            transform: translateY(0);
+        .capture-btn:active {
+            transform: scale(0.9);
         }
 
-        .btn-primary:disabled {
-            background: #c0c0c0;
-            color: #888;
-            box-shadow: none;
-            cursor: not-allowed;
-            opacity: 0.6;
-        }
-
-        .btn-primary:disabled:hover {
-            transform: none;
-            background: #c0c0c0;
-            box-shadow: none;
-        }
-
-        .btn-primary.success {
-            animation: success-glow 1s ease-in-out;
-        }
-
-        @keyframes success-glow {
-
-            0%,
-            100% {
-                box-shadow: 0 4px 20px rgba(0, 140, 19, 0.3);
-            }
-
-            50% {
-                box-shadow: 0 8px 40px rgba(0, 140, 19, 0.6);
-            }
-        }
-
-        .btn-secondary {
-            background: var(--dark-border);
-            color: var(--text-primary);
-            margin-top: 10px;
-        }
-
-        .btn-secondary:hover {
-            background: #b8bec8;
-        }
-
-        .btn:disabled {
-            opacity: 0.5;
+        .capture-btn:disabled {
+            opacity: 0.4;
             cursor: not-allowed;
         }
 
-        .results-section {
+        .retake-btn {
             display: none;
-            background: var(--dark-card);
-            border: 2px solid var(--dark-border);
-            border-radius: 16px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: var(--white);
+            font-size: 14px;
+            font-weight: 600;
+            padding: 12px 24px;
+            border-radius: 24px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+        }
+
+        .retake-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* Loading overlay for camera */
+        .camera-loading {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 220;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+        }
+
+        .camera-loading.show {
+            display: flex;
+        }
+
+        .camera-loading .spinner {
+            border: 3px solid rgba(255,255,255,0.2);
+            border-top: 3px solid var(--white);
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* ========== STEP 3: RESULTS ========== */
+        .results-content {
             padding: 20px;
+            flex: 1;
+        }
+
+        /* Validation status badge */
+        .status-banner {
+            padding: 14px 20px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
             margin-bottom: 20px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            font-weight: 600;
+            font-size: 15px;
         }
 
-        .results-section.show {
-            display: block;
-            animation: slideIn 0.3s ease-out;
+        .status-banner.pass {
+            background: #ecfdf5;
+            color: var(--success-green);
+            border: 1px solid #bbf7d0;
         }
 
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .status-banner.warning {
+            background: #fffbeb;
+            color: #b45309;
+            border: 1px solid #fde68a;
         }
 
-        .result-header {
+        .status-banner.fail {
+            background: #fef2f2;
+            color: var(--error-red);
+            border: 1px solid #fecaca;
+        }
+
+        /* Form-style fields (ICA inspired) */
+        .form-field {
+            background: var(--white);
+            border: 1px solid var(--border-gray);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+        }
+
+        .form-field-label {
+            font-size: 12px;
+            color: var(--text-label);
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+
+        .form-field-value {
+            font-size: 16px;
+            color: var(--text-dark);
+            font-weight: 600;
+        }
+
+        .form-field-value.highlight {
+            color: var(--accent-green);
+        }
+
+        /* Two-column row */
+        .form-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .form-row .form-field {
+            flex: 1;
+        }
+
+        /* Validation details (collapsible) */
+        .validation-toggle {
+            background: var(--white);
+            border: 1px solid var(--border-gray);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+
+        .validation-toggle-header {
+            padding: 14px 16px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid var(--neon-green);
-        }
-
-        .result-header h2 {
-            font-size: 20px;
-            color: var(--neon-green);
-        }
-
-        .validation-badge {
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 700;
-        }
-
-        .validation-badge.pass {
-            background: rgba(0, 247, 33, 0.2);
-            color: var(--success-green);
-            border: 1px solid var(--success-green);
-        }
-
-        .validation-badge.fail {
-            background: rgba(255, 68, 68, 0.2);
-            color: var(--error-red);
-            border: 1px solid var(--error-red);
-        }
-
-        .data-grid {
-            display: grid;
-            gap: 15px;
-        }
-
-        .data-item {
-            background: #f9fafb;
-            padding: 15px;
-            border-radius: 10px;
-            border-left: 3px solid var(--neon-green);
-            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-        }
-
-        .data-label {
-            font-size: 12px;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 6px;
-        }
-
-        .data-value {
-            font-size: 16px;
-            color: var(--text-primary);
-            font-weight: 600;
-        }
-
-        .data-value.highlight {
-            color: var(--neon-green);
-        }
-
-        .validation-details {
-            margin-top: 20px;
-            padding: 15px;
-            background: #f9fafb;
-            border-radius: 10px;
-            border: 1px solid var(--dark-border);
-        }
-
-        .validation-details h3 {
+            cursor: pointer;
             font-size: 14px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .validation-toggle-header:hover {
+            background: var(--bg-gray);
+        }
+
+        .validation-toggle-arrow {
+            font-size: 12px;
             color: var(--text-secondary);
-            margin-bottom: 10px;
+            transition: transform 0.2s;
+        }
+
+        .validation-toggle.open .validation-toggle-arrow {
+            transform: rotate(180deg);
+        }
+
+        .validation-toggle-body {
+            display: none;
+            padding: 0 16px 14px;
+        }
+
+        .validation-toggle.open .validation-toggle-body {
+            display: block;
         }
 
         .validation-item {
@@ -407,7 +526,8 @@
             justify-content: space-between;
             align-items: center;
             padding: 8px 0;
-            border-bottom: 1px solid var(--dark-border);
+            border-bottom: 1px solid var(--bg-gray);
+            font-size: 13px;
         }
 
         .validation-item:last-child {
@@ -415,132 +535,242 @@
         }
 
         .validation-icon {
-            font-size: 18px;
+            font-size: 16px;
         }
 
-        .loading {
-            display: none;
+        /* Authenticity score */
+        .auth-score {
             text-align: center;
-            padding: 20px;
-            color: var(--text-primary);
+            padding: 16px;
+            background: var(--white);
+            border: 1px solid var(--border-gray);
+            border-radius: 12px;
+            margin-bottom: 12px;
         }
 
-        .loading.show {
-            display: block;
+        .auth-score-value {
+            font-size: 36px;
+            font-weight: 800;
         }
 
-        .spinner {
-            border: 3px solid var(--dark-border);
-            border-top: 3px solid var(--neon-green);
-            color: var(--text-primary);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
+        .auth-score-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 4px;
         }
 
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
+        .auth-score-status {
+            font-size: 14px;
+            font-weight: 700;
+            margin-top: 8px;
+            padding: 4px 16px;
+            border-radius: 16px;
+            display: inline-block;
         }
 
+        .auth-score-status.haqiqiy {
+            background: #ecfdf5;
+            color: var(--success-green);
+        }
+
+        .auth-score-status.shubhali {
+            background: #fffbeb;
+            color: #b45309;
+        }
+
+        .auth-score-status.soxta {
+            background: #fef2f2;
+            color: var(--error-red);
+        }
+
+        /* Results footer nav */
+        .results-footer {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border-gray);
+            background: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .footer-btn {
+            background: none;
+            border: none;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 10px 16px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+        }
+
+        .footer-btn:hover {
+            background: var(--bg-gray);
+        }
+
+        .footer-btn.back {
+            color: var(--text-secondary);
+        }
+
+        .footer-btn.next {
+            color: var(--navy);
+        }
+
+        /* Error message */
         .error-message {
             display: none;
             background: #fef2f2;
             border: 1px solid var(--error-red);
             color: var(--error-red);
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
+            padding: 14px 16px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            font-size: 14px;
         }
 
         .error-message.show {
             display: block;
         }
 
-        .footer {
-            margin-top: auto;
-            padding-top: 20px;
+        /* Footer */
+        .app-footer {
+            padding: 16px 20px;
             text-align: center;
             color: var(--text-secondary);
-            font-size: 12px;
-            border-top: 1px solid var(--dark-border);
+            font-size: 11px;
         }
 
-        .footer p {
-            margin-bottom: 5px;
+        /* Dot indicators */
+        .step-dots {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px;
         }
 
-        .footer a {
-            color: var(--neon-green);
-            text-decoration: none;
-            font-weight: 700;
-            text-transform: uppercase;
+        .step-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--border-gray);
+            transition: background 0.3s;
+        }
+
+        .step-dot.active {
+            background: var(--navy);
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🛡️ BOJXONA NAZORATI</h1>
-            <!-- <p></p> -->
-            <!-- <div class="sub-info">CHEGARA FAKULTETI | 4-BOSQICH</div> -->
+    <!-- ===== STEP 1: INSTRUCTION ===== -->
+    <div class="step active" id="step-1">
+        <div class="nav-header">
+            <div class="nav-title">Pasportni Skanerlash</div>
         </div>
 
-        <div class="error-message" id="error-message"></div>
-
-        <div class="camera-section">
-            <div class="camera-container">
-                <video id="camera-stream" autoplay playsinline muted></video>
-                <canvas id="canvas-preview"></canvas>
-                <div class="passport-guide" id="passport-guide">
-                    <div class="corner-tl"></div>
-                    <div class="corner-tr"></div>
-                    <div class="corner-bl"></div>
-                    <div class="corner-br"></div>
-                    <div class="scan-line"></div>
+        <div class="instruction-content">
+            <div class="instruction-card">
+                <div class="instruction-header">
+                    <div class="instruction-icon">📷</div>
+                    <div class="instruction-title">Mashinada o'qiladigan zonani (MRZ) qanday skanerlash kerak?</div>
                 </div>
-            </div>
 
-            <button class="btn btn-primary" id="capture-btn">
-                📷 Rasmga Olish
-            </button>
-            <button class="btn btn-secondary" id="retake-btn" style="display: none;">
-                🔄 Qayta Olish
-            </button>
+                <p class="instruction-text">
+                    MRZ — pasport biodata sahifasining <strong>pastki qismidagi ikki qator</strong> belgilar.
+                    Kamerani pasportning MRZ zonasiga to'g'rilang.
+                </p>
+
+                <div class="passport-sample">
+                    <img src="/sample-passport" alt="Namuna pasport - MRZ zonasi">
+                </div>
+
+                <p class="note-text">Eslatma: Pasport rasmi saqlanmaydi.</p>
+            </div>
         </div>
 
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <p>Ma'lumotlar qayta ishlanmoqda...</p>
-        </div>
-
-        <div class="results-section" id="results-section">
-            <div class="result-header">
-                <h2>📋 Natijalar</h2>
-                <span class="validation-badge" id="validation-badge">PASS</span>
-            </div>
-
-            <div class="data-grid" id="data-grid">
-            </div>
-
-            <div class="validation-details" id="validation-details">
-            </div>
-
-            <button class="btn btn-primary" id="scan-another-btn">
-                ➕ Yangi Pasport
+        <div class="scan-btn-container">
+            <button class="btn-scan" id="start-scan-btn">
+                <span>📷</span>
+                <span>PASPORTNI SKANERLASH</span>
             </button>
         </div>
 
-        <div class="footer">
-            <p>Targeting and risk monitoring department</p>
+        <div class="app-footer">
+            Targeting and risk monitoring department
+        </div>
+    </div>
+
+    <!-- ===== STEP 2: CAMERA ===== -->
+    <div class="step" id="step-2">
+        <div class="camera-fullscreen" id="camera-fullscreen">
+            <div class="camera-top-bar">
+                <button class="camera-back-btn" id="camera-back-btn">&#8249; Orqaga</button>
+            </div>
+
+            <video id="camera-stream" autoplay playsinline muted></video>
+            <canvas id="canvas-preview"></canvas>
+
+            <div class="passport-guide" id="passport-guide">
+                <div class="corner-tl"></div>
+                <div class="corner-tr"></div>
+                <div class="corner-bl"></div>
+                <div class="corner-br"></div>
+                <div class="scan-line"></div>
+            </div>
+
+            <div class="camera-bottom" id="camera-bottom">
+                <button class="capture-btn" id="capture-btn" disabled></button>
+                <button class="retake-btn" id="retake-btn">Qayta olish</button>
+            </div>
+
+            <div class="camera-loading" id="camera-loading">
+                <div class="spinner"></div>
+                <p>Ma'lumotlar qayta ishlanmoqda...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== STEP 3: RESULTS ===== -->
+    <div class="step" id="step-3">
+        <div class="nav-header">
+            <button class="nav-back" id="results-back-btn">&#8249;</button>
+            <div class="nav-title">Ma'lumotlar</div>
+        </div>
+
+        <div class="results-content">
+            <div class="error-message" id="error-message"></div>
+
+            <div id="status-banner" class="status-banner pass"></div>
+
+            <div id="auth-score-section" class="auth-score"></div>
+
+            <div id="data-fields"></div>
+
+            <div class="validation-toggle" id="validation-toggle">
+                <div class="validation-toggle-header" id="validation-toggle-header">
+                    <span>ICAO 9303 Validatsiya</span>
+                    <span class="validation-toggle-arrow">&#9660;</span>
+                </div>
+                <div class="validation-toggle-body" id="validation-details"></div>
+            </div>
+        </div>
+
+        <div class="results-footer">
+            <button class="footer-btn back" id="footer-back-btn">
+                &#8249; ORQAGA
+            </button>
+            <div class="step-dots">
+                <div class="step-dot"></div>
+                <div class="step-dot"></div>
+                <div class="step-dot active"></div>
+            </div>
+            <button class="footer-btn next" id="footer-new-btn">
+                YANGI &#8250;
+            </button>
         </div>
     </div>
 
@@ -550,200 +780,104 @@
         tg.expand();
         tg.ready();
 
+        // State
+        let currentStep = 1;
+        let stream = null;
+        let capturedImageBlob = null;
+
         // DOM elements
+        const steps = {
+            1: document.getElementById('step-1'),
+            2: document.getElementById('step-2'),
+            3: document.getElementById('step-3')
+        };
+
         const cameraStream = document.getElementById('camera-stream');
         const canvasPreview = document.getElementById('canvas-preview');
         const captureBtn = document.getElementById('capture-btn');
         const retakeBtn = document.getElementById('retake-btn');
         const passportGuide = document.getElementById('passport-guide');
-        const loading = document.getElementById('loading');
-        const resultsSection = document.getElementById('results-section');
+        const cameraLoading = document.getElementById('camera-loading');
         const errorMessage = document.getElementById('error-message');
-        const scanAnotherBtn = document.getElementById('scan-another-btn');
 
-        let stream = null;
-        let capturedImageBlob = null;
+        // ========== STEP NAVIGATION ==========
+        function showStep(step) {
+            // Hide all steps
+            Object.values(steps).forEach(s => s.classList.remove('active'));
 
-        // Initialize camera with flexible constraints and fallback for maximum compatibility
+            // Show target step
+            steps[step].classList.add('active');
+            currentStep = step;
+
+            // Camera management
+            if (step === 2) {
+                initCamera();
+            } else {
+                stopCamera();
+                resetCameraUI();
+            }
+        }
+
+        // ========== CAMERA ==========
         async function initCamera() {
             try {
-                // Disable capture button until camera is ready
                 captureBtn.disabled = true;
-                captureBtn.textContent = '⏳ Kamera tayyorlanmoqda...';
 
-                // Check if camera API is available
                 if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                    throw new Error('Camera API not supported in this browser');
+                    throw new Error('Camera API not supported');
                 }
 
-                let constraints;
-
-                // Try with ideal high-quality constraints first
                 try {
-                    constraints = {
+                    stream = await navigator.mediaDevices.getUserMedia({
                         video: {
                             facingMode: { ideal: 'environment' },
                             width: { ideal: 1920 },
                             height: { ideal: 1080 }
                         }
-                    };
-                    stream = await navigator.mediaDevices.getUserMedia(constraints);
-                    console.log('✅ Camera initialized with high-quality settings');
-                } catch (firstError) {
-                    // Fallback to basic constraints for problematic devices
-                    console.warn('⚠️ High-quality camera failed, trying basic constraints...', firstError);
-                    constraints = {
-                        video: {
-                            facingMode: 'environment'
-                        }
-                    };
-                    stream = await navigator.mediaDevices.getUserMedia(constraints);
-                    console.log('✅ Camera initialized with basic settings');
+                    });
+                } catch (e) {
+                    stream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: 'environment' }
+                    });
                 }
 
                 cameraStream.srcObject = stream;
 
-                // Wait for video metadata to load (CRITICAL for Android)
                 await new Promise((resolve, reject) => {
-                    cameraStream.onloadedmetadata = () => {
-                        console.log(`📹 Video metadata loaded: ${cameraStream.videoWidth}x${cameraStream.videoHeight}`);
-                        resolve();
-                    };
-
-                    // Explicitly play the video (required for some Android browsers)
-                    cameraStream.play().then(() => {
-                        console.log('▶️ Video playback started');
-                    }).catch(err => {
-                        console.warn('⚠️ Video autoplay issue:', err);
-                    });
-
-                    // Timeout after 5 seconds
-                    setTimeout(() => reject(new Error('Video metadata loading timeout')), 5000);
+                    cameraStream.onloadedmetadata = () => resolve();
+                    cameraStream.play().catch(() => {});
+                    setTimeout(() => reject(new Error('Camera timeout')), 5000);
                 });
 
-                // Double-check video dimensions
-                if (cameraStream.videoWidth === 0 || cameraStream.videoHeight === 0) {
-                    throw new Error('Video dimensions are invalid. Camera may not be ready.');
+                if (cameraStream.videoWidth === 0) {
+                    throw new Error('Invalid video dimensions');
                 }
 
-                // Enable capture button now that camera is ready
                 captureBtn.disabled = false;
-                captureBtn.textContent = '📷 Rasmga Olish';
-
-                hideError();
-
             } catch (error) {
-                console.error('❌ Camera initialization failed:', error);
-                captureBtn.disabled = true;
-                captureBtn.textContent = '❌ Kamera xatosi';
-                showError('📱 Kamera ishlamayapti. Iltimos, kamera ruxsatini bering yoki brauzeringizni yangilang.\n\nXato: ' + error.message);
+                console.error('Camera error:', error);
+                showStep(1);
+                alert('Kamera ishlamayapti. Iltimos, kamera ruxsatini bering.');
             }
         }
 
-        // Capture photo with MRZ-only cropping for speed optimization
         function capturePhoto() {
-            // Validate video dimensions (CRITICAL for Android)
-            if (!cameraStream.videoWidth || !cameraStream.videoHeight ||
-                cameraStream.videoWidth === 0 || cameraStream.videoHeight === 0) {
-                console.error('❌ Video dimensions invalid:', cameraStream.videoWidth, cameraStream.videoHeight);
-                showError('⚠️ Kamera tayyor emas. Iltimos, bir oz kuting va qayta urinib ko\'ring.');
+            if (!cameraStream.videoWidth || !cameraStream.videoHeight) {
+                alert('Kamera tayyor emas. Qayta urinib ko\'ring.');
                 return;
             }
 
-            console.log(`📸 Capturing from video: ${cameraStream.videoWidth}x${cameraStream.videoHeight}`);
-
-            // Create full-size canvas from video
+            // Create full canvas from video
             const fullCanvas = document.createElement('canvas');
             fullCanvas.width = cameraStream.videoWidth;
             fullCanvas.height = cameraStream.videoHeight;
             const fullCtx = fullCanvas.getContext('2d');
             fullCtx.drawImage(cameraStream, 0, 0);
 
-            // Calculate MRZ crop area based on overlay position
-            // The overlay is positioned at bottom 15%, width 90%, height 18%
-            const cameraContainer = document.querySelector('.camera-container');
-            const containerWidth = cameraContainer.clientWidth;
-            const containerHeight = cameraContainer.clientHeight;
-
-            // Video aspect ratio might differ from container
-            // Safeguard against division by zero
-            if (fullCanvas.height === 0 || containerHeight === 0) {
-                console.error('❌ Invalid canvas or container dimensions');
-                showError('⚠️ Kamera o\'lchamlari noto\'g\'ri. Qayta urinib ko\'ring.');
-                retakePhoto();
-                return;
-            }
-
-            const videoAspect = fullCanvas.width / fullCanvas.height;
-            const containerAspect = containerWidth / containerHeight;
-
-            let renderWidth, renderHeight, offsetX, offsetY;
-
-            if (videoAspect > containerAspect) {
-                // Video is wider - height matches, width is cropped
-                renderHeight = containerHeight;
-                renderWidth = containerHeight * videoAspect;
-                offsetX = (renderWidth - containerWidth) / 2;
-                offsetY = 0;
-            } else {
-                // Video is taller - width matches, height is cropped
-                renderWidth = containerWidth;
-                renderHeight = containerWidth / videoAspect;
-                offsetX = 0;
-                offsetY = (renderHeight - containerHeight) / 2;
-            }
-
-            // Calculate MRZ box position in video coordinates
-            const overlayWidthPercent = 0.90;
-            const overlayHeightPercent = 0.18;
-            const overlayBottomPercent = 0.15;
-
-            const overlayWidth = containerWidth * overlayWidthPercent;
-            const overlayHeight = containerHeight * overlayHeightPercent;
-            const overlayX = (containerWidth - overlayWidth) / 2;
-            const overlayY = containerHeight * (1 - overlayBottomPercent - overlayHeightPercent);
-
-            // Convert to video coordinates
-            const scaleX = fullCanvas.width / renderWidth;
-            const scaleY = fullCanvas.height / renderHeight;
-
-            const cropX = (overlayX + offsetX) * scaleX;
-            const cropY = (overlayY + offsetY) * scaleY;
-            const cropWidth = overlayWidth * scaleX;
-            const cropHeight = overlayHeight * scaleY;
-
-            // Create cropped canvas (MRZ only)
-            const croppedCanvas = document.createElement('canvas');
-            croppedCanvas.width = cropWidth;
-            croppedCanvas.height = cropHeight;
-            const croppedCtx = croppedCanvas.getContext('2d');
-            croppedCtx.drawImage(
-                fullCanvas,
-                cropX, cropY, cropWidth, cropHeight,
-                0, 0, cropWidth, cropHeight
-            );
-
-            // Resize to width ~1000px for speed optimization
-            const maxWidth = 1000;
-            let finalCanvas = croppedCanvas;
-
-            if (croppedCanvas.width > maxWidth) {
-                const scale = maxWidth / croppedCanvas.width;
-                finalCanvas = document.createElement('canvas');
-                finalCanvas.width = maxWidth;
-                finalCanvas.height = croppedCanvas.height * scale;
-                const finalCtx = finalCanvas.getContext('2d');
-
-                // High quality resize
-                finalCtx.imageSmoothingEnabled = true;
-                finalCtx.imageSmoothingQuality = 'high';
-                finalCtx.drawImage(croppedCanvas, 0, 0, finalCanvas.width, finalCanvas.height);
-            }
-
-            // Show preview (cropped MRZ area)
-            canvasPreview.width = finalCanvas.width;
-            canvasPreview.height = finalCanvas.height;
-            canvasPreview.getContext('2d').drawImage(finalCanvas, 0, 0);
+            // Show preview
+            canvasPreview.width = fullCanvas.width;
+            canvasPreview.height = fullCanvas.height;
+            canvasPreview.getContext('2d').drawImage(fullCanvas, 0, 0);
 
             // Stop camera and show preview
             stopCamera();
@@ -753,26 +887,21 @@
             retakeBtn.style.display = 'block';
             passportGuide.classList.add('scanning');
 
-            // Convert to blob (quality 0.95 for MRZ clarity)
-            finalCanvas.toBlob(async (blob) => {
+            // Convert to blob and auto-scan
+            fullCanvas.toBlob(async (blob) => {
                 if (!blob) {
-                    console.error('❌ Failed to create image blob');
-                    showError('⚠️ Rasmni saqlashda xatolik. Qayta urinib ko\'ring.');
+                    alert('Rasmni saqlashda xatolik.');
                     retakePhoto();
                     return;
                 }
-
                 capturedImageBlob = blob;
-                console.log(`📸 MRZ area captured: ${finalCanvas.width}x${finalCanvas.height}, Size: ${(blob.size / 1024).toFixed(1)}KB`);
                 await scanPassport(blob);
             }, 'image/jpeg', 0.95);
         }
 
-        // Scan passport via API
         async function scanPassport(imageBlob) {
-            loading.classList.add('show');
+            cameraLoading.classList.add('show');
             hideError();
-            resultsSection.classList.remove('show');
 
             const formData = new FormData();
             formData.append('file', imageBlob, 'passport.jpg');
@@ -790,131 +919,28 @@
                 }
 
                 displayResults(result.data);
-                captureBtn.classList.add('success');
-                setTimeout(() => captureBtn.classList.remove('success'), 1000);
-
+                showStep(3);
             } catch (error) {
-                // Show detailed error message
-                const errorMsg = error.message || 'Noma\'lum xato';
-                showError(errorMsg);
-                // Show retake option
-                setTimeout(() => {
-                    retakeBtn.style.display = 'block';
-                }, 500);
-            } finally {
-                loading.classList.remove('show');
-                passportGuide.classList.remove('scanning');
+                cameraLoading.classList.remove('show');
+                showError(error.message || 'Noma\'lum xato');
+                retakeBtn.style.display = 'block';
             }
         }
 
-        // Display results
-        function displayResults(data) {
-            resultsSection.classList.add('show');
-
-            // Validation badge
-            const badge = document.getElementById('validation-badge');
-            badge.textContent = data.validation_status;
-            badge.className = `validation-badge ${data.validation_status.toLowerCase()}`;
-
-            // Data grid
-            const dataGrid = document.getElementById('data-grid');
-            dataGrid.innerHTML = `
-                <div class="data-item">
-                    <div class="data-label">Pasport Raqami</div>
-                    <div class="data-value highlight">${data.passport_number}</div>
-                </div>
-                <div class="data-item">
-                    <div class="data-label">Familiya</div>
-                    <div class="data-value">${data.surname}</div>
-                </div>
-                <div class="data-item">
-                    <div class="data-label">Ism</div>
-                    <div class="data-value">${data.given_names}</div>
-                </div>
-                <div class="data-item">
-                    <div class="data-label">JSHSHIR / PNFL</div>
-                    <div class="data-value highlight">${data.personal_number || 'N/A'}</div>
-                </div>
-                <div class="data-item">
-                    <div class="data-label">Tug'ilgan Sana</div>
-                    <div class="data-value">${data.date_of_birth}</div>
-                </div>
-                <div class="data-item">
-                    <div class="data-label">Jins</div>
-                    <div class="data-value">${data.sex}</div>
-                </div>
-                <div class="data-item">
-                    <div class="data-label">Amal Qilish Muddati</div>
-                    <div class="data-value">${data.date_of_expiry}</div>
-                </div>
-                <div class="data-item">
-                    <div class="data-label">Millat</div>
-                    <div class="data-value">${data.nationality}</div>
-                </div>
-                <div class="data-item">
-                    <div class="data-label">OCR Aniqligi</div>
-                    <div class="data-value highlight">${data.ocr_accuracy != null ? data.ocr_accuracy + '%' : 'N/A'}</div>
-                </div>
-            `;
-
-            // Validation details
-            const validationDetails = document.getElementById('validation-details');
-            const validations = data.validations;
-            validationDetails.innerHTML = `
-                <h3>🔐 ICAO 9303 Validatsiya</h3>
-                ${Object.entries(validations).map(([key, value]) => `
-                    <div class="validation-item">
-                        <span>${formatValidationKey(key)}</span>
-                        <span class="validation-icon">${value ? '✅' : '❌'}</span>
-                    </div>
-                `).join('')}
-            `;
-
-            // Notify Telegram
-            if (tg && tg.sendData) {
-                tg.sendData(JSON.stringify(data));
-            }
-        }
-
-        // Format validation keys
-        function formatValidationKey(key) {
-            const labels = {
-                'passport_number_valid': 'Pasport Raqami Checksum',
-                'dob_valid': 'Tug\'ilgan Sana Checksum',
-                'expiry_valid': 'Amal Qilish Checksum',
-                'personal_number_valid': 'JSHSHIR Checksum',
-                'composite_valid': 'Composite Checksum',
-                'dob_format_valid': 'Tug\'ilgan Sana Format',
-                'expiry_format_valid': 'Amal Qilish Format'
-            };
-            return labels[key] || key;
-        }
-
-        // Retake photo
         function retakePhoto() {
-            canvasPreview.style.display = 'none';
-            retakeBtn.style.display = 'none';
-            resultsSection.classList.remove('show');
-            hideError();
-
-            // Show camera and reinitialize
-            cameraStream.style.display = 'block';
-            captureBtn.style.display = 'block';
-            passportGuide.style.display = 'block';
+            resetCameraUI();
             initCamera();
         }
 
-        // Show/hide error
-        function showError(message) {
-            errorMessage.textContent = '⚠️ ' + message;
-            errorMessage.classList.add('show');
+        function resetCameraUI() {
+            canvasPreview.style.display = 'none';
+            cameraStream.style.display = 'block';
+            captureBtn.style.display = 'block';
+            retakeBtn.style.display = 'none';
+            passportGuide.classList.remove('scanning');
+            cameraLoading.classList.remove('show');
         }
 
-        function hideError() {
-            errorMessage.classList.remove('show');
-        }
-
-        // Stop camera
         function stopCamera() {
             if (stream) {
                 stream.getTracks().forEach(track => track.stop());
@@ -922,16 +948,148 @@
             }
         }
 
+        // ========== RESULTS DISPLAY ==========
+        function displayResults(data) {
+            // Status banner
+            const banner = document.getElementById('status-banner');
+            const isPass = data.validation_status === 'PASS';
+            banner.className = `status-banner ${isPass ? 'pass' : 'warning'}`;
+            banner.innerHTML = `
+                <span>${isPass ? '&#10003;' : '&#9888;'}</span>
+                <span>${isPass ? 'Barcha tekshiruvlar muvaffaqiyatli' : 'Ba\'zi tekshiruvlar o\'tmadi'}</span>
+            `;
 
-        // Event listeners
+            // Authenticity score
+            const authSection = document.getElementById('auth-score-section');
+            if (data.authenticity) {
+                const auth = data.authenticity;
+                const statusClass = auth.status === 'HAQIQIY' ? 'haqiqiy' :
+                                   auth.status === 'SHUBHALI' ? 'shubhali' : 'soxta';
+                authSection.innerHTML = `
+                    <div class="auth-score-value" style="color: ${auth.status === 'HAQIQIY' ? 'var(--success-green)' : auth.status === 'SHUBHALI' ? '#b45309' : 'var(--error-red)'}">${auth.score}%</div>
+                    <div class="auth-score-label">Haqiqiylik balli</div>
+                    <div class="auth-score-status ${statusClass}">${auth.status}</div>
+                `;
+            }
+
+            // Form fields
+            const fullName = `${data.surname || ''} ${data.given_names || ''}`.trim();
+            const fields = document.getElementById('data-fields');
+            fields.innerHTML = `
+                <div class="form-field">
+                    <div class="form-field-label">To'liq Ism (Pasportda)</div>
+                    <div class="form-field-value">${fullName}</div>
+                </div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <div class="form-field-label">Jins</div>
+                        <div class="form-field-value">${data.sex === 'M' ? 'ERKAK' : data.sex === 'F' ? 'AYOL' : data.sex}</div>
+                    </div>
+                    <div class="form-field">
+                        <div class="form-field-label">Tug'ilgan Sana</div>
+                        <div class="form-field-value">${data.date_of_birth}</div>
+                    </div>
+                </div>
+                <div class="form-field">
+                    <div class="form-field-label">Fuqarolik</div>
+                    <div class="form-field-value">${data.nationality}</div>
+                </div>
+                <div class="form-field">
+                    <div class="form-field-label">Pasport Raqami</div>
+                    <div class="form-field-value highlight">${data.passport_number}</div>
+                </div>
+                <div class="form-field">
+                    <div class="form-field-label">Amal Qilish Muddati</div>
+                    <div class="form-field-value">${data.date_of_expiry}</div>
+                </div>
+                <div class="form-field">
+                    <div class="form-field-label">JSHSHIR / PNFL</div>
+                    <div class="form-field-value highlight">${data.personal_number || 'N/A'}</div>
+                </div>
+                <div class="form-field">
+                    <div class="form-field-label">OCR Aniqligi</div>
+                    <div class="form-field-value highlight">${data.ocr_accuracy != null ? data.ocr_accuracy + '%' : 'N/A'}</div>
+                </div>
+            `;
+
+            // Validation details
+            const validationDetails = document.getElementById('validation-details');
+            const validations = data.validations || {};
+            const authChecks = data.authenticity ? data.authenticity.checks || {} : {};
+            const allChecks = { ...validations, ...authChecks };
+
+            validationDetails.innerHTML = Object.entries(allChecks).map(([key, value]) => `
+                <div class="validation-item">
+                    <span>${formatValidationKey(key)}</span>
+                    <span class="validation-icon">${value === true ? '&#10004;' : value === false ? '&#10008;' : '—'}</span>
+                </div>
+            `).join('');
+
+            // Send to Telegram
+            if (tg && tg.sendData) {
+                try { tg.sendData(JSON.stringify(data)); } catch(e) {}
+            }
+        }
+
+        function formatValidationKey(key) {
+            const labels = {
+                'passport_valid': 'Pasport Raqami Checksum',
+                'passport_checksum': 'Pasport Raqami Checksum',
+                'dob_valid': 'Tug\'ilgan Sana Checksum',
+                'dob_checksum': 'Tug\'ilgan Sana Checksum',
+                'expiry_valid': 'Amal Qilish Checksum',
+                'expiry_checksum': 'Amal Qilish Checksum',
+                'pinfl_valid': 'JSHSHIR Checksum',
+                'personal_checksum': 'JSHSHIR Checksum',
+                'composite_checksum': 'Composite Checksum',
+                'doc_type_valid': 'Hujjat Turi',
+                'passport_format': 'Pasport Format',
+                'nationality_format': 'Millat Kodi Format',
+                'dob_date_valid': 'Tug\'ilgan Sana Mantiq',
+                'expiry_date_valid': 'Amal Qilish Mantiq',
+                'not_expired': 'Muddati Tugamagan',
+                'personal_number_format': 'JSHSHIR Format',
+                'pinfl_dob_sex_match': 'JSHSHIR Cross-Validation'
+            };
+            return labels[key] || key.replace(/_/g, ' ');
+        }
+
+        // ========== ERROR HANDLING ==========
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add('show');
+        }
+
+        function hideError() {
+            errorMessage.classList.remove('show');
+        }
+
+        // ========== EVENT LISTENERS ==========
+        // Step 1 -> Step 2
+        document.getElementById('start-scan-btn').addEventListener('click', () => showStep(2));
+
+        // Step 2 -> Step 1 (back)
+        document.getElementById('camera-back-btn').addEventListener('click', () => showStep(1));
+
+        // Capture photo
         captureBtn.addEventListener('click', capturePhoto);
+
+        // Retake
         retakeBtn.addEventListener('click', retakePhoto);
-        scanAnotherBtn.addEventListener('click', retakePhoto);
 
-        // Initialize on load
-        window.addEventListener('load', initCamera);
+        // Step 3 -> Step 2 (back to scan)
+        document.getElementById('results-back-btn').addEventListener('click', () => showStep(2));
+        document.getElementById('footer-back-btn').addEventListener('click', () => showStep(2));
 
-        // Cleanup on unload
+        // New scan
+        document.getElementById('footer-new-btn').addEventListener('click', () => showStep(1));
+
+        // Validation toggle
+        document.getElementById('validation-toggle-header').addEventListener('click', () => {
+            document.getElementById('validation-toggle').classList.toggle('open');
+        });
+
+        // Cleanup
         window.addEventListener('beforeunload', stopCamera);
     </script>
 </body>
