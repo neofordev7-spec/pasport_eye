@@ -39,23 +39,20 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
 
     welcome_message = (
-        f"🛂 <b>Bojxona MRZ Scanner</b>\n\n"
-        f"Assalomu alaykum, {user.first_name}! 👋\n\n"
-        f"O'zbekiston Davlat Bojxona Qo'mitasi chegarа nazorati uchun "
-        f"<b>biometrik pasport MRZ skaneri</b>.\n\n"
-        f"━━━━━━━━━━━━━━━━\n"
-        f"🌍 <b>Barcha davlatlar pasportlari</b> qo'llab-quvvatlanadi\n"
-        f"📋 <b>ICAO Doc 9303</b> TD3 standarti asosida ishlaydi\n"
-        f"🔒 <b>Oflayn OCR</b> — ma'lumotlar tashqariga chiqmaydi\n"
-        f"✅ <b>Matematik haqiqiylik tekshiruvi</b> (Modulo 10)\n"
-        f"━━━━━━━━━━━━━━━━\n\n"
-        f"📌 <i>Pasportni skanerlash uchun quyidagi tugmani bosing:</i>"
+        f"Assalomu alaykum, <b>{user.first_name}</b>! 👋\n\n"
+        f"<b>Bojxona MRZ Scanner</b> — chegarа nazorati pasport skaneri.\n\n"
+        f"Siz bu yerda:\n"
+        f"🔹 Pasportning MRZ zonasini skanerlaysiz\n"
+        f"🔹 Ma'lumotlarni avtomatik o'qiysiz\n"
+        f"🔹 Haqiqiylikni tekshirasiz\n"
+        f"🔹 Natijani bir zumda olasiz\n\n"
+        f"👇 Boshlash uchun tugmani bosing:"
     )
 
     # Create Web App button
     keyboard = [
         [InlineKeyboardButton(
-            "📷 Pasportni Skanerlash",
+            "📱 Ilovani ochish",
             web_app=WebAppInfo(url=WEBAPP_URL)
         )],
         [InlineKeyboardButton("❓ Yordam", callback_data="help"),
