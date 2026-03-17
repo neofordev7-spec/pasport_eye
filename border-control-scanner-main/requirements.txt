@@ -10,8 +10,6 @@ python-telegram-bot>=22.0
 # Image Processing
 Pillow==10.2.0
 
-# YOLO MRZ Detection
-ultralytics>=8.0.0
 
 # Utilities
 python-dateutil>=2.9.0

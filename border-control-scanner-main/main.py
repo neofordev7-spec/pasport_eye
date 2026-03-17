@@ -15,7 +15,7 @@ from fastapi.responses import JSONResponse, HTMLResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 from PIL import Image
 from telegram import Update
-from mrz import scan_mrz_from_bytes
+from mrz import scan_mrz_from_bytes, init_ocr
 
 app = FastAPI(
     title="Customs Committee Passport Scanner",
@@ -34,6 +34,14 @@ app.add_middleware(
 
 # Templates
 templates = Jinja2Templates(directory="templates")
+
+
+@app.on_event("startup")
+async def startup_event():
+    """PaddleOCR ni oldindan yuklash — birinchi so'rovda kutish yo'q."""
+    print("PaddleOCR oldindan yuklanmoqda...", flush=True)
+    init_ocr()
+    print("PaddleOCR tayyor — so'rovlar qabul qilinadi.", flush=True)
 
 # ============================================
 # STRICT ICAO 9303 MRZ PARSER

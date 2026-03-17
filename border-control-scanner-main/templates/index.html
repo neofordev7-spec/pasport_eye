@@ -840,15 +840,24 @@
             isScanning = true;
 
             try {
-                // Video'dan frame olish
+                // Video'dan faqat MRZ zonasini crop qilib olish (markazdagi 20%)
+                const vw = cameraStream.videoWidth;
+                const vh = cameraStream.videoHeight;
+                const cropHeight = Math.round(vh * 0.20);
+                const cropY = Math.round((vh - cropHeight) / 2);
+
                 const canvas = document.createElement('canvas');
-                canvas.width = cameraStream.videoWidth;
-                canvas.height = cameraStream.videoHeight;
-                canvas.getContext('2d').drawImage(cameraStream, 0, 0);
+                canvas.width = vw;
+                canvas.height = cropHeight;
+                canvas.getContext('2d').drawImage(
+                    cameraStream,
+                    0, cropY, vw, cropHeight,
+                    0, 0, vw, cropHeight
+                );
 
                 // JPEG blob yaratish
                 const blob = await new Promise(resolve => {
-                    canvas.toBlob(resolve, 'image/jpeg', 0.85);
+                    canvas.toBlob(resolve, 'image/jpeg', 0.75);
                 });
 
                 if (!blob) {
