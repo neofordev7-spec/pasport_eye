@@ -285,7 +285,7 @@
         }
 
         .scan-line {
-            display: none;
+            display: block;
             position: absolute;
             width: 100%;
             height: 3px;
@@ -293,10 +293,6 @@
             box-shadow: 0 0 14px rgba(255, 50, 80, 0.7);
             animation: scan-line 2s ease-in-out infinite;
             z-index: 211;
-        }
-
-        .scanning .scan-line {
-            display: block;
         }
 
         /* Camera bottom controls */
@@ -314,57 +310,18 @@
             z-index: 210;
         }
 
-        .capture-btn {
-            width: 72px;
-            height: 72px;
-            border-radius: 50%;
-            background: var(--white);
-            border: 4px solid rgba(255,255,255,0.4);
-            cursor: pointer;
-            transition: transform 0.15s;
-            position: relative;
-        }
-
-        .capture-btn::after {
-            content: '';
-            position: absolute;
-            top: 4px;
-            left: 4px;
-            right: 4px;
-            bottom: 4px;
-            border-radius: 50%;
-            background: var(--white);
-            transition: background 0.15s;
-        }
-
-        .capture-btn:hover::after {
-            background: #e0e0e0;
-        }
-
-        .capture-btn:active {
-            transform: scale(0.9);
-        }
-
-        .capture-btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-
-        .retake-btn {
-            display: none;
-            background: rgba(255,255,255,0.2);
-            border: none;
+        .scan-status {
             color: var(--white);
             font-size: 14px;
             font-weight: 600;
-            padding: 12px 24px;
+            padding: 10px 24px;
             border-radius: 24px;
-            cursor: pointer;
+            background: rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(10px);
         }
 
-        .retake-btn:hover {
-            background: rgba(255,255,255,0.3);
+        .scan-status.found {
+            background: var(--accent-green);
         }
 
         /* Loading overlay for camera */
@@ -719,8 +676,7 @@
             </div>
 
             <div class="camera-bottom" id="camera-bottom">
-                <button class="capture-btn" id="capture-btn" disabled></button>
-                <button class="retake-btn" id="retake-btn">Qayta olish</button>
+                <div class="scan-status" id="scan-status">MRZ qidirilmoqda...</div>
             </div>
 
             <div class="camera-loading" id="camera-loading">
@@ -779,7 +735,8 @@
         // State
         let currentStep = 1;
         let stream = null;
-        let capturedImageBlob = null;
+        let autoScanInterval = null;
+        let isScanning = false;
 
         // DOM elements
         const steps = {
@@ -790,35 +747,28 @@
 
         const cameraStream = document.getElementById('camera-stream');
         const canvasPreview = document.getElementById('canvas-preview');
-        const captureBtn = document.getElementById('capture-btn');
-        const retakeBtn = document.getElementById('retake-btn');
         const passportGuide = document.getElementById('passport-guide');
         const cameraLoading = document.getElementById('camera-loading');
+        const scanStatus = document.getElementById('scan-status');
         const errorMessage = document.getElementById('error-message');
 
         // ========== STEP NAVIGATION ==========
         function showStep(step) {
-            // Hide all steps
             Object.values(steps).forEach(s => s.classList.remove('active'));
-
-            // Show target step
             steps[step].classList.add('active');
             currentStep = step;
 
-            // Camera management
             if (step === 2) {
                 initCamera();
             } else {
+                stopAutoScan();
                 stopCamera();
-                resetCameraUI();
             }
         }
 
         // ========== CAMERA ==========
         async function initCamera() {
             try {
-                captureBtn.disabled = true;
-
                 if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                     throw new Error('Camera API not supported');
                 }
@@ -838,6 +788,8 @@
                 }
 
                 cameraStream.srcObject = stream;
+                cameraStream.style.display = 'block';
+                canvasPreview.style.display = 'none';
 
                 await new Promise((resolve, reject) => {
                     cameraStream.onloadedmetadata = () => resolve();
@@ -849,7 +801,9 @@
                     throw new Error('Invalid video dimensions');
                 }
 
-                captureBtn.disabled = false;
+                // Kamera tayyor — avtomatik skanerlashni boshlash
+                startAutoScan();
+
             } catch (error) {
                 console.error('Camera error:', error);
                 showStep(1);
@@ -857,52 +811,55 @@
             }
         }
 
-        function capturePhoto() {
-            if (!cameraStream.videoWidth || !cameraStream.videoHeight) {
-                alert('Kamera tayyor emas. Qayta urinib ko\'ring.');
-                return;
-            }
+        // ========== AUTO SCAN ==========
+        function startAutoScan() {
+            stopAutoScan();
+            isScanning = false;
+            scanStatus.textContent = 'MRZ qidirilmoqda...';
+            scanStatus.classList.remove('found');
+            cameraLoading.classList.remove('show');
 
-            // Create full canvas from video
-            const fullCanvas = document.createElement('canvas');
-            fullCanvas.width = cameraStream.videoWidth;
-            fullCanvas.height = cameraStream.videoHeight;
-            const fullCtx = fullCanvas.getContext('2d');
-            fullCtx.drawImage(cameraStream, 0, 0);
-
-            // Show preview
-            canvasPreview.width = fullCanvas.width;
-            canvasPreview.height = fullCanvas.height;
-            canvasPreview.getContext('2d').drawImage(fullCanvas, 0, 0);
-
-            // Stop camera and show preview
-            stopCamera();
-            cameraStream.style.display = 'none';
-            canvasPreview.style.display = 'block';
-            captureBtn.style.display = 'none';
-            retakeBtn.style.display = 'block';
-            passportGuide.classList.add('scanning');
-
-            // Convert to blob and auto-scan
-            fullCanvas.toBlob(async (blob) => {
-                if (!blob) {
-                    alert('Rasmni saqlashda xatolik.');
-                    retakePhoto();
-                    return;
-                }
-                capturedImageBlob = blob;
-                await scanPassport(blob);
-            }, 'image/jpeg', 0.95);
+            // Har 2 sekundda frame olish va serverga yuborish
+            autoScanInterval = setInterval(() => {
+                if (isScanning || currentStep !== 2) return;
+                captureAndScan();
+            }, 2000);
         }
 
-        async function scanPassport(imageBlob) {
-            cameraLoading.classList.add('show');
-            hideError();
+        function stopAutoScan() {
+            if (autoScanInterval) {
+                clearInterval(autoScanInterval);
+                autoScanInterval = null;
+            }
+            isScanning = false;
+        }
 
-            const formData = new FormData();
-            formData.append('file', imageBlob, 'passport.jpg');
+        async function captureAndScan() {
+            if (!cameraStream.videoWidth || !cameraStream.videoHeight || !stream) return;
+
+            isScanning = true;
 
             try {
+                // Video'dan frame olish
+                const canvas = document.createElement('canvas');
+                canvas.width = cameraStream.videoWidth;
+                canvas.height = cameraStream.videoHeight;
+                canvas.getContext('2d').drawImage(cameraStream, 0, 0);
+
+                // JPEG blob yaratish
+                const blob = await new Promise(resolve => {
+                    canvas.toBlob(resolve, 'image/jpeg', 0.85);
+                });
+
+                if (!blob) {
+                    isScanning = false;
+                    return;
+                }
+
+                // Serverga yuborish
+                const formData = new FormData();
+                formData.append('file', blob, 'passport.jpg');
+
                 const response = await fetch('/scan', {
                     method: 'POST',
                     body: formData
@@ -910,31 +867,25 @@
 
                 const result = await response.json();
 
-                if (!response.ok) {
-                    throw new Error(result.detail || 'Skanerlashda xatolik');
+                if (response.ok && result.success) {
+                    // MRZ topildi va o'qildi!
+                    stopAutoScan();
+                    scanStatus.textContent = 'MRZ topildi!';
+                    scanStatus.classList.add('found');
+                    displayResults(result.data);
+
+                    // Biroz kutib keyin natijalar sahifasiga o'tish
+                    setTimeout(() => showStep(3), 500);
+                    return;
                 }
 
-                displayResults(result.data);
-                showStep(3);
+                // MRZ topilmadi — davom etish
+                isScanning = false;
+
             } catch (error) {
-                cameraLoading.classList.remove('show');
-                showError(error.message || 'Noma\'lum xato');
-                retakeBtn.style.display = 'block';
+                console.error('Auto-scan error:', error);
+                isScanning = false;
             }
-        }
-
-        function retakePhoto() {
-            resetCameraUI();
-            initCamera();
-        }
-
-        function resetCameraUI() {
-            canvasPreview.style.display = 'none';
-            cameraStream.style.display = 'block';
-            captureBtn.style.display = 'block';
-            retakeBtn.style.display = 'none';
-            passportGuide.classList.remove('scanning');
-            cameraLoading.classList.remove('show');
         }
 
         function stopCamera() {
@@ -1067,12 +1018,6 @@
         // Step 2 -> Step 1 (back)
         document.getElementById('camera-back-btn').addEventListener('click', () => showStep(1));
 
-        // Capture photo
-        captureBtn.addEventListener('click', capturePhoto);
-
-        // Retake
-        retakeBtn.addEventListener('click', retakePhoto);
-
         // Step 3 -> Step 2 (back to scan)
         document.getElementById('results-back-btn').addEventListener('click', () => showStep(2));
         document.getElementById('footer-back-btn').addEventListener('click', () => showStep(2));
@@ -1086,7 +1031,10 @@
         });
 
         // Cleanup
-        window.addEventListener('beforeunload', stopCamera);
+        window.addEventListener('beforeunload', () => {
+            stopAutoScan();
+            stopCamera();
+        });
     </script>
 </body>
 
